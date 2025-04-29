@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+    <section class="admin-reports slide-in-right">
+        <h2>Reports</h2>
+        {% if reports %}
+            {% for report in reports %}
+                <div class="report-card fade-in">
+                    <div class="report-content">
+                        <h3>Report #{{ report.id }}</h3>
+                        <p class="report-reason"><strong>Reason:</strong> {{ report.reason }}</p>
+                        <p class="report-date"><strong>Reported on:</strong> {{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    </div>
+                    <div class="menfess-card">
+                        <div class="menfess-content">{{ report.menfess.process_commands()|safe }}</div>
+                        <div class="menfess-meta">
+                            <span class="menfess-date">{{ report.menfess.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        </div>
+                    </div>
+                    <div class="admin-actions">
+                        <a href="{{ url_for('delete_reported_menfess', id=report.menfess.id) }}" class="delete-link" onclick="return confirm('Are you sure you want to delete this menfess?')">
+                            <i class="far fa-trash-alt"></i> Delete Menfess
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+            
+            <div class="pagination-container">
+                {{ pagination.links|safe }}
+            </div>
+        {% else %}
+            <p class="no-reports">No reports.</p>
+        {% endif %}
+    </section>
+{% endblock %}

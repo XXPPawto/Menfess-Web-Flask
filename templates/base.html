@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{% if current_user.is_authenticated %}{{ current_user.theme_preference }}{% else %}light{% endif %}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKFESS - {% block title %}{% endblock %}</title>
+    <link rel="icon" href="logo-unsri.png" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="container header-container">
+            <h1 class="logo"><a href="{{ url_for('index') }}">
+                <div class="logo-container">
+                    <div class="logo-text">SK<span>FESS</span></div>
+                </div>
+            </a></h1>
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav>
+                <ul id="nav-menu">
+                    <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a></li>
+                    {% if current_user.is_authenticated %}
+                        <li><a href="{{ url_for('post_menfess') }}"><i class="fas fa-pen"></i> Post</a></li>
+                        <li><a href="{{ url_for('my_menfesses') }}"><i class="fas fa-list"></i> My Posts</a></li>
+                        <li>
+                            <a href="{{ url_for('profile') }}" class="profile-link">
+                                <img src="{{ url_for('profile_pic', filename=current_user.profile_picture) }}" alt="{{ current_user.username }}" class="profile-pic-small">
+                                {{ current_user.username }}
+                            </a>
+                        </li>
+                        {% if current_user.role == 'admin' %}
+                            <li><a href="{{ url_for('admin') }}"><i class="fas fa-cog"></i> Admin</a></li>
+                        {% elif current_user.role == 'moderator' %}
+                            <li><a href="{{ url_for('admin_menfesses') }}"><i class="fas fa-shield-alt"></i> Moderate</a></li>
+                        {% endif %}
+                        <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                        <li><a href="{{ url_for('register') }}"><i class="fas fa-user-plus"></i> Register</a></li>
+                    {% endif %}
+                    <li>
+                        <button id="theme-toggle" class="theme-toggle">
+                            <i class="fas fa-sun light-icon"></i>
+                            <i class="fas fa-moon dark-icon"></i>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} fade-in">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 SKFESS. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Animation for alerts
+        setTimeout(function() {
+            $('.alert').addClass('fade-out');
+            setTimeout(function() {
+                $('.alert').remove();
+            }, 500);
+        }, 3000);
+
+        // Like functionality
+        $(document).ready(function() {
+            $('.like-button').click(function(e) {
+                e.preventDefault();
+                var menfessId = $(this).data('id');
+                var likeButton = $(this);
+                var likeCount = $(this).find('.like-count');
+
+                $.ajax({
+                    url: '/like-menfess/' + menfessId,
+                    type: 'POST',
+                    success: function(response) {
+                        if (response.status === 'liked') {
+                            likeButton.addClass('liked');
+                            likeButton.find('i').removeClass('far').addClass('fas');
+                        } else {
+                            likeButton.removeClass('liked');
+                            likeButton.find('i').removeClass('fas').addClass('far');
+                        }
+                        likeCount.text(response.likes);
+                        
+                        // Add animation
+                        likeButton.addClass('pulse');
+                        setTimeout(function() {
+                            likeButton.removeClass('pulse');
+                        }, 500);
+                    }
+                });
+            });
+
+            // Theme toggle functionality
+            const themeToggle = document.getElementById('theme-toggle');
+            const htmlElement = document.documentElement;
+            
+            // Check if theme preference is stored in localStorage
+            const savedTheme = localStorage.getItem('theme') || 
+                               (document.documentElement.getAttribute('data-theme') || 'light');
+            
+            // Apply the saved theme
+            htmlElement.setAttribute('data-theme', savedTheme);
+            
+            themeToggle.addEventListener('click', function() {
+                const currentTheme = htmlElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                
+                htmlElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                
+                // If user is logged in, save preference to database
+                $.ajax({
+                    url: '/toggle-theme',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ theme: newTheme }),
+                    success: function(response) {
+                        console.log('Theme preference saved:', response.theme);
+                    }
+                });
+            });
+            
+            // Mobile menu toggle
+            $('#mobile-menu-toggle').click(function() {
+                $('#nav-menu').toggleClass('show');
+            });
+        });
+    </script>
+</body>
+</html>

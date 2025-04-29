@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Users{% endblock %}
+
+{% block content %}
+    <section class="admin-users slide-in-right">
+        <h2>Manage Users</h2>
+        <div class="users-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                        <tr class="fade-in">
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.role }}</td>
+                            <td>
+                                {% if user.is_suspended %}
+                                    <span class="suspended">Suspended</span>
+                                {% else %}
+                                    <span class="active">Active</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('edit_user', id=user.id) }}" class="edit-link">
+                                    <i class="far fa-edit"></i> Edit
+                                </a>
+                                {% if user.role != 'admin' %}
+                                    <a href="{{ url_for('toggle_suspend', id=user.id) }}" class="suspend-link">
+                                        {% if user.is_suspended %}
+                                            <i class="far fa-play-circle"></i> Unsuspend
+                                        {% else %}
+                                            <i class="far fa-pause-circle"></i> Suspend
+                                        {% endif %}
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <div class="pagination-container">
+                {{ pagination.links|safe }}
+            </div>
+        </div>
+    </section>
+{% endblock %}

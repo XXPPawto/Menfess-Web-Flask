@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Report Menfess{% endblock %}
+
+{% block content %}
+    <section class="report-form">
+        <h2>Report Menfess</h2>
+        <div class="menfess-card">
+            <div class="menfess-content">{{ menfess.content }}</div>
+            <div class="menfess-meta">
+                <span class="menfess-date">{{ menfess.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+        </div>
+        <form method="POST" action="{{ url_for('report_menfess', id=menfess.id) }}">
+            <div class="form-group">
+                <label for="reason">Reason for Report</label>
+                <textarea id="reason" name="reason" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn">Submit Report</button>
+        </form>
+    </section>
+{% endblock %}

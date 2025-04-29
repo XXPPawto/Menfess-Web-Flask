@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}Post Menfess{% endblock %}
+
+{% block content %}
+    <section class="post-form slide-in-left">
+        <h2>Post a Menfess</h2>
+        <form method="POST" action="{{ url_for('post_menfess') }}" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="category_id">Category</label>
+                <select id="category_id" name="category_id" required>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="display_name_type">Display Name</label>
+                <select id="display_name_type" name="display_name_type" onchange="toggleCustomName()">
+                    <option value="anonymous">Anonymous</option>
+                    <option value="username">Use My Username ({{ current_user.username }})</option>
+                    <option value="custom">Custom Name</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="custom_name_group" style="display: none;">
+                <label for="custom_name">Custom Display Name</label>
+                <input type="text" id="custom_name" name="custom_name" placeholder="Enter custom display name">
+            </div>
+            
+            <div class="form-group">
+                <label for="content">Your Message</label>
+                <textarea id="content" name="content" rows="5" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="voice_note">Voice Note (Optional)</label>
+                <div class="voice-recorder">
+                    <div class="recorder-controls">
+                        <button type="button" id="recordButton" class="record-btn">
+                            <i class="fas fa-microphone"></i> Record
+                        </button>
+                        <button type="button" id="stopButton" class="stop-btn" disabled>
+                            <i class="fas fa-stop"></i> Stop
+                        </button>
+                        <span id="recordingStatus"></span>
+                    </div>
+                    <div class="audio-preview" id="audioPreview" style="display: none;">
+                        <audio id="recordedAudio" controls></audio>
+                    </div>
+                    <input type="file" id="voice_note" name="voice_note" accept="audio/*" style="display: none;">
+                    <div class="upload-option">
+                        <p>Or upload an audio file:</p>
+                        <input type="file" id="uploadVoiceNote" name="voice_note" accept="audio/*">
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="post-btn">
+                <i class="fas fa-paper-plane"></i> Post
+            </button>
+        </form>
+        
+        <div class="commands-help">
+            <h3>Command Guide</h3>
+            <p>You can use these commands in your menfess:</p>
+            <ul>
+                <li><code>#bold#text#bold#</code> - Makes text <strong>bold</strong></li>
+                <li><code>#italic#text#italic#</code> - Makes text <em>italic</em></li>
+                <li><code>#color:red#text#color#</code> - Changes text <span style="color:red">color</span></li>
+                <li><code>#quote#text#quote#</code> - Creates a <blockquote>blockquote</blockquote></li>
+            </ul>
+        </div>
+        
+        {% if current_user.role not in ['admin', 'moderator'] %}
+            <p class="note">Note: Your menfess will be reviewed before being published.</p>
+        {% endif %}
+    </section>
+
+    <script>
+        // Toggle custom name field visibility
+        function toggleCustomName() {
+            const displayNameType = document.getElementById('display_name_type').value;
+            const customNameGroup = document.getElementById('custom_name_group');
+            
+            if (displayNameType === 'custom') {
+                customNameGroup.style.display = 'block';
+            } else {
+                customNameGroup.style.display = 'none';
+            }
+        }
+        
+        // Voice recording functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            let recorder;
+            let audioChunks = [];
+            const recordButton = document.getElementById('recordButton');
+            const stopButton = document.getElementById('stopButton');
+            const recordingStatus = document.getElementById('recordingStatus');
+            const audioPreview = document.getElementById('audioPreview');
+            const recordedAudio = document.getElementById('recordedAudio');
+            const voiceNoteInput = document.getElementById('voice_note');
+            const uploadVoiceNote = document.getElementById('uploadVoiceNote');
+            
+            // Handle file upload
+            uploadVoiceNote.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    // If user uploads a file, disable recording
+                    recordButton.disabled = true;
+                    recordingStatus.textContent = 'Using uploaded file';
+                } else {
+                    recordButton.disabled = false;
+                    recordingStatus.textContent = '';
+                }
+            });
+            
+            // Start recording
+            recordButton.addEventListener('click', async function() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    recordButton.disabled = true;
+                    stopButton.disabled = false;
+                    recordingStatus.textContent = 'Recording...';
+                    
+                    // Clear any uploaded file
+                    uploadVoiceNote.value = '';
+                    
+                    // Create MediaRecorder
+                    recorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    recorder.addEventListener('dataavailable', event => {
+                        audioChunks.push(event.data);
+                    });
+                    
+                    recorder.addEventListener('stop', () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        recordedAudio.src = audioUrl;
+                        audioPreview.style.display = 'block';
+                        
+                        // Convert blob to file and set it to the hidden input
+                        const audioFile = new File([audioBlob], 'recorded-voice-note.webm', { type: 'audio/webm' });
+                        
+                        // Create a DataTransfer object to set the file to the input
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(audioFile);
+                        voiceNoteInput.files = dataTransfer.files;
+                    });
+                    
+                    recorder.start();
+                } catch (error) {
+                    console.error('Error accessing microphone:', error);
+                    recordingStatus.textContent = 'Error: Could not access microphone';
+                }
+            });
+            
+            // Stop recording
+            stopButton.addEventListener('click', function() {
+                if (recorder && recorder.state === 'recording') {
+                    recorder.stop();
+                    recordButton.disabled = false;
+                    stopButton.disabled = true;
+                    recordingStatus.textContent = 'Recording stopped';
+                    
+                    // Stop all audio tracks
+                    recorder.stream.getTracks().forEach(track => track.stop());
+                }
+            });
+        });
+    </script>
+{% endblock %}

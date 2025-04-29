@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Pending Menfesses{% endblock %}
+
+{% block content %}
+    <section class="category-filter">
+        <h3>Filter by Category</h3>
+        <div class="filter-buttons">
+            <a href="{{ url_for('admin_menfesses') }}" class="filter-btn {% if not current_category %}active{% endif %}">All</a>
+            {% for category in categories %}
+                <a href="{{ url_for('admin_menfesses', category=category.id) }}" class="filter-btn {% if current_category and current_category.id == category.id %}active{% endif %}">{{ category.name }}</a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="admin-menfesses slide-in-right">
+        <h2>
+            {% if current_category %}
+                Pending {{ current_category.name }} Menfesses
+            {% else %}
+                Pending Menfesses
+            {% endif %}
+        </h2>
+        {% if menfesses %}
+            {% for menfess in menfesses %}
+                <div class="menfess-card pending fade-in">
+                    <div class="menfess-category">
+                        {% if menfess.category_id %}
+                            <span class="category-badge">{{ menfess.category_rel.name }}</span>
+                        {% else %}
+                            <span class="category-badge">General</span>
+                        {% endif %}
+                    </div>
+                    <div class="menfess-content">{{ menfess.process_commands()|safe }}</div>
+                    <div class="menfess-meta">
+                        <span class="menfess-date">{{ menfess.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        <div class="admin-actions">
+                            <a href="{{ url_for('approve_menfess', id=menfess.id) }}" class="approve-link">
+                                <i class="far fa-check-circle"></i> Approve
+                            </a>
+                            <a href="{{ url_for('reject_menfess', id=menfess.id) }}" class="reject-link" onclick="return confirm('Are you sure you want to reject this menfess?')">
+                                <i class="far fa-times-circle"></i> Reject
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            
+            <div class="pagination-container">
+                {{ pagination.links|safe }}
+            </div>
+        {% else %}
+            <p class="no-menfess">No pending menfesses in this category.</p>
+        {% endif %}
+    </section>
+{% endblock %}

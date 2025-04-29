@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <section class="hero slide-in-left">
+        <h2>Welcome to SKFESS</h2>
+        <p>Bagikan pesan Anda secara anonim</p>
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('post_menfess') }}" class="btn pulse">Post a Menfess</a>
+        {% else %}
+            <a href="{{ url_for('register') }}" class="btn pulse">Gabung Sekarang</a>
+        {% endif %}
+    </section>
+
+    <section class="category-filter">
+        <h3>Filter by Category</h3>
+        <div class="filter-buttons">
+            <a href="{{ url_for('index') }}" class="filter-btn {% if not current_category %}active{% endif %}">All</a>
+            {% for category in categories %}
+                <a href="{{ url_for('index', category=category.id) }}" class="filter-btn {% if current_category and current_category.id == category.id %}active{% endif %}">{{ category.name }}</a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="menfess-list slide-in-right">
+        <h2>
+            {% if current_category %}
+                {{ current_category.name }} Menfesses
+            {% else %}
+                Latest Menfesses
+            {% endif %}
+        </h2>
+        {% if menfesses %}
+            {% for menfess in menfesses %}
+                <div class="menfess-card fade-in">
+                    <div class="menfess-header">
+                        <div class="menfess-category">
+                            {% if menfess.category_id %}
+                                <span class="category-badge">{{ menfess.category_rel.name }}</span>
+                            {% else %}
+                                <span class="category-badge">General</span>
+                            {% endif %}
+                        </div>
+                        <div class="menfess-author">
+                            {% if menfess.display_name %}
+                                <span class="author-name">{{ menfess.display_name }}</span>
+                            {% else %}
+                                <span class="author-name">Anonymous</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="menfess-content">{{ menfess.process_commands()|safe }}</div>
+                    
+                    {% if menfess.voice_note %}
+                        <div class="voice-note-player">
+                            <audio controls>
+                                <source src="{{ url_for('voice_note', filename=menfess.voice_note) }}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="menfess-meta">
+                        <span class="menfess-date">{{ menfess.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        <div class="menfess-actions">
+                            {% if current_user.is_authenticated %}
+                                <a href="{{ url_for('report_menfess', id=menfess.id) }}" class="report-link">
+                                    <i class="far fa-flag"></i> Report
+                                </a>
+                                <a href="#" class="like-button {% if menfess.user_liked %}liked{% endif %}" data-id="{{ menfess.id }}">
+                                    <i class="{% if menfess.user_liked %}fas{% else %}far{% endif %} fa-heart"></i>
+                                    <span class="like-count">{{ menfess.like_count }}</span>
+                                </a>
+                                <a href="{{ url_for('view_comments', id=menfess.id) }}" class="comments-link">
+                                    <i class="far fa-comment"></i>
+                                    <span class="comment-count">{{ menfess.comment_count }}</span>
+                                </a>
+                            {% else %}
+                                <span class="like-count-only">
+                                    <i class="far fa-heart"></i> {{ menfess.like_count }}
+                                </span>
+                                <a href="{{ url_for('view_comments', id=menfess.id) }}" class="comments-link">
+                                    <i class="far fa-comment"></i>
+                                    <span class="comment-count">{{ menfess.comment_count }}</span>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            
+            <div class="pagination-container">
+                {{ pagination.links|safe }}
+            </div>
+        {% else %}
+            <p class="no-menfess">No menfesses found in this category.</p>
+        {% endif %}
+    </section>
+{% endblock %}

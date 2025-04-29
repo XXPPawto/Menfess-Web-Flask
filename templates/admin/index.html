@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Panel{% endblock %}
+
+{% block content %}
+    <section class="admin-dashboard slide-in-left">
+        <h2>Admin Dashboard</h2>
+        <div class="admin-stats">
+            <div class="stat-card">
+                <h3>Pending Menfesses</h3>
+                <p class="stat-number">{{ pending_menfesses }}</p>
+                <a href="{{ url_for('admin_menfesses') }}" class="btn">View</a>
+            </div>
+            <div class="stat-card">
+                <h3>Reports</h3>
+                <p class="stat-number">{{ reports }}</p>
+                <a href="{{ url_for('admin_reports') }}" class="btn">View</a>
+            </div>
+            <div class="stat-card">
+                <h3>Users</h3>
+                <p class="stat-number">{{ users }}</p>
+                <a href="{{ url_for('admin_users') }}" class="btn">Manage</a>
+            </div>
+        </div>
+        
+        <div class="admin-links">
+            <a href="{{ url_for('admin_categories') }}" class="admin-link-card">
+                <i class="fas fa-tags"></i>
+                <h3>Manage Categories</h3>
+                <p>Add, edit, or delete menfess categories</p>
+            </a>
+        </div>
+    </section>
+{% endblock %}

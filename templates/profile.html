@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+    <section class="profile-form slide-in-left">
+        <h2>Edit Profile</h2>
+        
+        <div class="profile-picture-container">
+            <img src="{{ url_for('profile_pic', filename=current_user.profile_picture) }}" alt="{{ current_user.username }}" class="profile-pic-large">
+        </div>
+        
+        <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="profile_picture">Profile Picture</label>
+                <input type="file" id="profile_picture" name="profile_picture" accept="image/*">
+                <small>Upload a new profile picture (JPG, PNG, GIF)</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" value="{{ current_user.username }}" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="{{ current_user.email }}" required>
+            </div>
+            <div class="form-group">
+                <label for="theme_preference">Theme Preference</label>
+                <select id="theme_preference" name="theme_preference">
+                    <option value="light" {% if current_user.theme_preference == 'light' %}selected{% endif %}>Light</option>
+                    <option value="dark" {% if current_user.theme_preference == 'dark' %}selected{% endif %}>Dark</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="new_password">New Password (leave blank to keep current)</label>
+                <input type="password" id="new_password" name="new_password">
+            </div>
+            <button type="submit" class="btn">Update Profile</button>
+        </form>
+    </section>
+{% endblock %}
